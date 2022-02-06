@@ -1,0 +1,232 @@
+---
+title: "DATA 101 Exam 1"
+author: "Shreehar Joshi"
+date: 'Due: Monday 10/26 at 11:59pm'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include = FALSE}
+# set the echo option to FALSE to see how the document looks with the code suppressed
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Academic Honesty Statement (fill in your name)
+
+I, Shreehar Joshi, hereby affirm that I have not communicated with or gained information in any way from my classmates or anyone other than the Professor during this exam, that I have not assisted anyone else with this exam, and that all work is my own.
+
+## Load packages and data
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+```
+
+```{r read-data, message=FALSE}
+nba <- read_csv("data/nba_salaries.csv")
+```
+
+## Questions 
+
+### Question 1
+
+The highest paid players for the NBA 2015-2016 season are as follows: 
+
+```{r highest-paid}
+nba %>%
+  arrange(desc(salary)) 
+```
+
+Kobe Bryant had the highest salary of 25.0 million USD per year in the NBA season 2015-2016.
+He was followed by Joe Johnson and LeBron James each with the salary of 24.9 and 23.0 million USD per year respectively. All the top three highest paid players played in the "Small Forward" position.
+
+### Question 2
+
+Now, lets visualize the distribution of salaries based on position in the NBA 2015-2016.
+
+```{r box-plot}
+nba %>%
+  ggplot(aes(x = position, y = salary)) +
+  geom_boxplot() +
+  theme_minimal() +
+  scale_x_discrete(labels = c("C" = "Center", 
+                              "PG" = "Point Guard", 
+                              "SG" = "Shooting Guard", 
+                              "PF" = "Power Forward",
+                              "SF" = "Small Forward")) +
+  #Reference (https://ggplot2.tidyverse.org/reference/scale_discrete.html)
+  labs(
+    x = " ",
+    y = "$ Millions per year",
+    title = "NBA Salaries 2015-2016",
+    subtitle = "by Position"
+  )
+```
+
+The position "Center" has the highest median salary and the position "Shooting Guard" has the least median salary. The position "Center" also has the highest range and interquartile range in salaries. "Power Forward" and "Shooting Guard" have the highest number of outliers while as "Small Forward" has outliers with the highest salaries among all the positions.
+
+### Question 3
+
+Now lets find out the number of players that play in each position.
+
+```{r num-position}
+nba %>%
+  count(position)
+```
+
+The table above shows that the number of players in Center, Power Forward, Point Guard, Small Forward, and Shooting Guard are 69, 85, 85, 82, and 96 respectively.
+
+Finally, lets visualize the number of players in each position.
+
+```{r numvis-position}
+nba %>%
+  ggplot(aes(x = fct_rev(fct_infreq(position)),
+             fill = fct_rev(fct_infreq(position)))) +
+  geom_bar() +
+  theme(axis.text.x = element_text(size = 8)) +
+  #Reference (http://www.cookbook-r.com/Graphs/Axes_(ggplot2)/)
+  scale_x_discrete(labels = c("C" = "Center",
+                              "PG" = "Point Guard", 
+                              "SG" = "Shooting Guard", 
+                              "PF" = "Power Forward",
+                              "SF" = "Small Forward")) +
+  #Reference (https://ggplot2.tidyverse.org/reference/scale_discrete.html)
+  scale_fill_discrete(labels = c("C" = "Center", 
+                                 "PG" = "Point Guard", 
+                                 "SG" = "Shooting Guard", 
+                                 "PF" = "Power Forward", 
+                                 "SF" = "Small Forward")) +
+  #Reference (http://www.cookbook-r.com/Graphs/Legends_(ggplot2)/)
+  labs(
+    x = "Position",
+    y = "Number of Players",
+    title = "Number of Players by Position",
+    subtitle = "in NBA 2015-2016",
+    fill = "Position"
+  )
+```
+
+It is evident from the graph above that the position "Center" had the least number of players and the position "Shooting Guard" had the highest number of players in the NBA 2015-2016. The other three positions (Small Forward, Point Guard, and Power Forward) had the number of players that were in between the number of players in "Center" and "Shooting Guard". Additionally, "Point Guard" and "Power Forward" had the same number of players, both of which were greater than the number of players in "Small Forward".
+
+### Question 4
+
+Now, lets visualize the distribution of players' salaries.
+
+```{r dist-salary}
+nba %>%
+  ggplot(aes(x = salary)) +
+  geom_histogram(binwidth = 2) +
+  labs(
+    x = "Salary (in millions of dollars)",
+    y = "Number of Players",
+    title = "Distribution of Players' Salaries",
+    subtitle = "in NBA 2015-2016"
+  )
+```
+
+The distribution of salaries is unimodal and right skewed. The histogram above suggests that majority of NBA players had an annual salary of around 3 million USD per year for the season 2015-2016. It also suggests that some players were able to have salaries far greater than the average with the maximum being 25 million USD per year.
+
+### Question 5
+
+Now lets find the average player salary for the top 10 highest paying teams.
+
+```{r avg-salary-team}
+nba %>%
+  group_by(team) %>%
+  summarise(avg_salary = mean(salary)) %>%
+  arrange(desc(avg_salary)) %>%
+  top_n(10)
+```
+
+Cleveland Cavaliers had the average salary of 10.2 million USD per year, which was the highest for a team. It was followed by Houston Rockets and Miami Heats in the second and third position with average salaries of 7.11 million and 6.79 million USD per year respectively.
+
+### Question 6
+
+Now, lets classify the salaries of the players into "Low", "Moderate", and "High". 
+
+```{r salary-level}
+nba_salary <- nba %>%
+  mutate(salary_level = case_when(
+    salary < 8                ~ "Low",
+    salary >= 8 & salary < 16 ~ "Moderate",
+    salary >= 16              ~ "High"
+  ))
+```
+
+After this, lets calculate the proportion of players at each salary level.
+
+```{r salary-proportion}
+nba_salary %>%
+  count(salary_level, sort = TRUE) %>%
+  mutate(prop_players = n / sum(n))
+```
+
+Majority of players had a "Low" salary as their proportion is 0.782, which is the highest.
+Only a few players had a "High" salary as their proportion is 0.0528, which is the least. The proportion of players whose salary is classified as "Medium" is 0.165 and it falls in between the proportion of players that have "High" and "Low" salaries.  
+
+### Question 7
+
+Now lets create a dataframe to store the starting lineup salaries of each team.
+
+```{r nba-starters}
+starters <- nba %>%
+  select (-player) %>%
+  group_by(team, position) %>%
+  filter(salary == max(salary)) %>%
+  ungroup() %>%
+  distinct() %>%
+  arrange(team, position) 
+  
+starters
+```
+
+To create the dataframe above, at first, we removed the "player" column by using select function in the nba dataframe. Then, the dataframe was piped to be grouped on the basis of team and position. And then, we used filter function to find the maximum salary. Had we just grouped on the basis of team, then the maximum salary on the basis of teams would have been filtered instead of filtering the maximum salary on the basis of each positions in each teams. After the filter function, ungroup function is used to remove the groups in the resulting dataframe. It is followed by distinct function to avoid any repetition of the highest salaries by selecting only the unique rows. The distinct function is followed by arrange function to sort the output alphabetically first by team name and then by position. 
+
+
+### Question 8
+
+Now, adding a column with appropriate player names to the starters dataframe by left joining it with nba dataframe.
+
+```{r starters-player}
+starters <- left_join(starters, nba)
+starters
+```
+
+To create the dataframe above, we used left join to join the two dataframes (starters and nba). In this type of join, all rows from starters dataframe are returned along with the matching rows from nba dataframe.  
+
+### Question 9
+
+We can count the number of players in each of the positions in each of the teams and if we find any position with more than 1 value in any team, then we can conclude that the team 
+has multiple starters in a single position. 
+
+```{r ties}
+starters %>%
+  count(team, position) %>%
+  filter(n > 1)
+```
+ 
+In the team Indiana Pacers, the Center position had two players with the same highest salary. 
+
+### Question 10
+
+Finally, lets view the teams with the name of their players with highest salaries in each position.
+
+```{r starters-unique}
+starters_unique <- starters %>%
+  filter(player != "Ian Mahinmi") %>%
+  pivot_wider(-salary, names_from = position, values_from = player)
+
+knitr::kable(starters_unique, 
+             col.names = c("Team",
+                           "Center", 
+                           "Power Forward",
+                           "Point Guard",
+                           "Small Forward",
+                           "Shooting Guard"))
+#Reference (https://bookdown.org/yihui/rmarkdown-cookbook/kable.html)
+```
+
+To create the dataframe above, at first, the starters dataframe is piped into a filter function which removes the record for the player "Ian Mahinmi". Then the resulting dataframe is pivoted using pivot_wider function. The first argument passed in this function removes the salary column. The second and third arguments will create columns with names from position and the values for those newly created columns taken from players' names. In the end, knitr:kable function is used to print the entire table.
+
+

@@ -1,0 +1,12 @@
+---
+title: "Merge conflicts"
+author: "Status200OK: Kamila Palys, Manav Bhagat, Sai Dalli, Shreehar Joshi"
+date: "10/4/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Add some narrative here:

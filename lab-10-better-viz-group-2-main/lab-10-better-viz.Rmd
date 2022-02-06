@@ -1,0 +1,87 @@
+---
+title: "Lab 10 - Conveying the right message through visualization"
+author: "TENSORFLOW 2.0"
+date: "11/12/2020"
+output: pdf_document
+---
+
+### Load packages and data
+
+```{r load-packages, message=FALSE}
+library(tidyverse) 
+library(lubridate)
+```
+
+### Exercise 1
+
+At first, lets create a dataframe that can be used to reconstruct the visualization.
+
+```{r create-table}
+
+# Creating a Dataframe
+covid_cases <- tribble(
+  ~date, ~mask, ~no_mask,
+  "7/12/2020", 25.4, 9.8,
+  "7/13/2020", 19.8, 9.4,
+  "7/14/2020", 19.7, 9.6,
+  "7/15/2020", 20.5, 9.8,
+  "7/16/2020", 19.8, 9.9,
+  "7/17/2020", 19.8, 9.7,
+  "7/18/2020", 20.55, 9.65,
+  "7/19/2020", 19.9, 9.2,
+  "7/20/2020", 20.75, 8.8,
+  "7/21/2020", 21.4, 8.8,
+  "7/22/2020", 19.9, 8.9,
+  "7/23/2020", 19.9, 8.8,
+  "7/24/2020", 20.55, 9.9,
+  "7/25/2020", 19, 9.90,
+  "7/26/2020", 19.8, 10.1,
+  "7/27/2020", 17, 9.5,
+  "7/28/2020", 16.2, 9.55,
+  "7/29/2020", 16.4, 9.6,
+  "7/30/2020", 16.6, 10,
+  "7/31/2020", 16, 8.9,
+  "8/1/2020", 16.05, 9,
+  "8/2/2020", 15.9, 8.9,
+  "8/3/2020", 16, 9
+)
+
+# Modifying the dataframe
+covid_cases <- covid_cases %>%  
+  pivot_longer(cols = c(mask, no_mask), names_to = "Mask", values_to = "Number") %>%
+  mutate(date = mdy(date))
+
+covid_cases
+```
+
+### Exercise 2
+
+Now, let's create a visualization that shows the trend in the number of cases with and without masks. 
+
+```{r visualize} 
+covid_cases %>%   
+ ggplot(mapping = aes(x = date, y = Number, fill = Mask)) +
+ geom_bar(stat = "identity", position = 'dodge', color = "black") +
+ theme_minimal() +
+ scale_fill_discrete(labels = c("mask" = "Mask", 
+                                "no_mask" = "No Mask")) +
+ theme(plot.title = element_text(size = 10, face = "bold"),
+       plot.subtitle = element_text(size = 9, hjust = 0.5),
+       axis.text.x = element_text(angle = 90, hjust = 0.5)) +
+ labs(
+   x = "Date",
+   y = "Number of Cases",
+   title = "Kansas COVID-19 7-Day Rolling Average of Daily Cases/Per 100K Population ",
+   subtitle = "Mask Counties Vs. No-Mask Counties",
+   caption = "Source: Kansas Department of Health and Environment"
+ ) 
+```
+
+### Exercise 3
+
+The second visualization enables us to view the number of average cases in counties with masks in relation to the number of average cases in counties without masks more clearly and helps us make comparison between them as both the barcharts have the same y-axis label now. It becomes clear that while the number of cases in mask mandated counties are decreasing but it still has not gone down to the level of the number of cases in mask non-mandated counties. However, we must note one fact that with this trend the number of cases in covid mandated counties are likely to hit lower numbers as the days pass by.
+
+### Exercise 4
+
+The chart above shows that wearing mask is correlated with decrease in the number of cases as it can be seen from the chart that the number of cases in counties where masks were mandated decreased by roughly 35% while as the number of cases in counties where masks were not mandated remained roughly constant or increase slightly (less than 1%). This relation completely lines up with our scientific understanding of the transmission of the virus as wearing masks prevents virus droplets from being spread and hence the number of cases decreases.
+

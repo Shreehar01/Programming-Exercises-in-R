@@ -1,0 +1,223 @@
+---
+title: "Lab 04 - Visualizing spatial data"
+author: "Status200OK"
+date: "10/1/20"
+output: pdf_document
+---
+
+### Load packages and data
+
+```{r load-packages, message=FALSE}
+library(tidyverse) 
+library(dsbox)
+```
+
+```{r load-data, message=FALSE}
+states <- read_csv("data/states.csv")
+```
+
+### Exercise 1
+
+There are `r nrow(dennys)` rows and `r ncol(dennys)` columns in the `dennys` dataset. 
+
+
+Each row in the dataset represents a location of Denny's restaurants.The 
+variables in the dataset are: `r names(dennys)`.  
+
+
+
+
+### Exercise 2
+
+There are `r nrow(laquinta)` rows and `r ncol(laquinta)` columns in the 
+`laquinta` dataset. 
+
+
+Each row in the dataset represents a location of La Quinta restaurants.The 
+variables in the dataset are: `r names(laquinta)`.  
+ 
+
+
+### Exercise 3
+
+There are no Denny's restaurants outside the United States. 
+
+Not all La Quinta hotels are in the United States. There are La Quinta hotels in Canada, Mexico, Honduras, Turkey, Chile, and Colombia as well. 
+
+
+### Exercise 4
+
+To see if there is an establishment outside of the US, we could find out the range of the latitude and longitude of the US from the internet, and then check in the dataset if there is a longitude or latitude that falls outside of that range. 
+
+Another method could be checking if the state of the hotel is a state that is 
+not in the US. The list of the states' abbreviation of the US can be found from the `states` dataset and with the use of this, states with the abbreviation that is not in the list can be filtered and stored.
+
+
+### Exercise 5
+
+Now we will check for the locations of Denny's that are outside the US by filtering the state variable.
+
+```{r}
+dennys %>%
+  filter(!(state %in% states$abbreviation))
+```
+
+As seen in the tibble, there are 0 rows after we applied the filter, which means there are no Denny's outside the US. 
+
+### Exercise 6
+
+We will now add a new variable, or column, for the country of the Denny's locations, all of which are the United States. 
+
+
+```{r adding-country-dennys}
+dennys <- dennys %>%
+  mutate(country = "United States")
+```
+
+
+
+### Exercise 7
+
+```{r finding-country-not-US}
+temp_laquinta <- laquinta %>%
+  filter(!(state %in% states$abbreviation))
+```
+
+The locations of La Quinta hotels that are outside the US are shown below:
+```{r displaying-country-not-US}
+temp_laquinta
+```
+
+There are `r nrow(temp_laquinta)` La Quinta hotels that are outside the US.  
+The states ON and BC are in Canada, ANT in Colombia, FM in Honduras, and 
+AG, QR, CH, NL, UE, PU and SL are in Mexico. 
+
+### Exercise 8
+
+Now, adding countries' name in the `laquinta` dataset.
+
+```{r adding-country-laquinta}
+laquinta <- laquinta %>%
+  mutate(country = case_when(
+    state %in% state.abb     ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT"           ~ "Colombia",
+    state == "FM"            ~ "Honduras",
+    state %in% c("AG", "QR",
+                 "CH", "NL",
+                 "UE", "PU",
+                 "SL")       ~ "Mexico"
+  ))
+```
+
+
+
+### Exercise 9
+
+Now, filtering out only those La Quinta hotels that are in the US.
+
+```{r laquinta-US}
+laquinta <- laquinta %>%
+  filter(country == "United States")
+```
+
+
+Now, lets find out which state has the most and least number of Denny's.
+
+```{r count-dennys}
+dennys %>%
+  count(state) %>% 
+  filter(n == max(n) | n == min(n)) %>%
+  arrange(desc(n))
+```
+
+
+The tibble above shows that California has the largest number of Denny's and Delaware has the least number of Denny's. 
+
+Similarly, lets find out which state has the most and least number of La Quinta.
+
+```{r count-laquinta}
+laquinta %>%
+  count(state) %>%
+  filter(n == max(n) | n == min(n)) %>%
+  arrange(desc(n))
+```
+
+The tibble above shows that Texas has the largest number of La Quinta and Maine has the least number of La Quinta.
+
+The result is quite surprising because we, backed by the joke made famous by Mitch Hedberg, were expecting that the states which have largest and least number of the two establishments would be the same. 
+
+### Exercise 10
+
+Now, lets find out where are Denny's most densely located. 
+
+```{r dennys-per-sq-mile}
+dennys %>%
+  count(state ) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate (persqmile= n/area) %>%
+  arrange(desc(persqmile)) %>%
+  top_n(1)
+```
+
+The tibble above shows that District of Columbia has the most Denny's per square mile.
+
+Similarly, lets find out where are La Quinta most densely located. 
+
+```{r laquinta-per-sq-mile}
+laquinta %>%
+  count(state ) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate (persqmile= n/area) %>%
+  arrange(desc(persqmile)) %>%
+  top_n(1)
+```
+
+The tibble above shows that Rhode Island has the most La Quinta per square mile.
+
+### Exercise 11
+
+Now, merging the two datasets.
+
+```{r}
+dennys <- dennys %>%
+  mutate(establishment = "Denny's")
+laquinta <- laquinta %>%
+  mutate(establishment = "La Quinta")
+dn_lq <- bind_rows(dennys, laquinta)
+```
+
+After this, lets visualize the spread of the two establishments within North Carolina.
+
+```{r visualize-NC}
+dn_lq %>%
+  filter( state == "NC") %>%
+  ggplot(mapping = aes(x = longitude, y = latitude, color = establishment)) +
+    geom_point(alpha= 0.7) +
+    labs(title= "Locations of Denny's and La Quinta on North Carolina",
+       x= "Longitude",
+       y= "Latitude",
+       color="Establishment") +
+    theme_minimal()
+
+```
+
+While there are few locations where Denny's and La Quinta seem to be together, in majority of the locations Denny's are found without any neighboring La Quintas. Hence the joke by Mitch Hedberg doesnt appear to hold here.
+
+### Exercise 12
+
+Finally, lets visualize the spread of the two establishments within Texas.
+
+```{r visualize-TX}
+dn_lq %>%
+  filter( state == "TX") %>%
+  ggplot(mapping = aes(x = longitude, y = latitude, color = establishment)) +
+    geom_point(alpha= 0.5) +
+    labs(title= "Locations of Denny's and La Quinta on Texas",
+       x= "Longitude",
+       y= "Latitude",
+       color="Establishment") +
+    theme_minimal()
+```
+
+In almost all the locations, Denny's and La Quinta appear to be clustered together. Hence, the joke by Mitch Hedberg appear to hold here.

@@ -1,0 +1,126 @@
+---
+title: "Lab 07 - UoE Art Collection"
+author: "Tensorflow2.0"
+date: "10/22/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+options(width=200)
+```
+
+### Load packages and data
+
+```{r load-packages, message=FALSE}
+library(tidyverse) 
+library(skimr)
+```
+
+```{r load-data, message=FALSE}
+uoe_art <- read_csv("data/uoe-art.csv")
+```
+
+### Exercise 10
+
+At first, lets separate the year from our title column.
+
+```{r title-year-separate}
+uoe_art <- uoe_art %>%
+  separate(title, into = c("title", "date"), sep = " \\(") %>%
+  mutate(year = str_remove(date, "\\)") %>%
+  as.numeric()) %>%
+  select(title, artist, year, link)
+```
+
+The first warning was generated because there were other pieces of information in the title of some of the art pieces which we could have stored in other columns but were ignored. We can ignore this warning because we are just concerned about the title and the year.
+
+The second warning was generated because in some cases, we tried to convert characters into numeric value. We can ignore this warning as well because those characters were replaced with NA.
+
+The third warning was probably generated to indicate that NA were being input in
+some function that we used above. We can ignore this as well because this will not affect our aim to separate title into two different columns.
+
+### Exercise 11
+
+Now, lets print a summary of the dataframe.
+
+```{r skim}
+skim_without_charts(uoe_art)
+```
+
+123 pieces are missing artist information while as 771 pieces are missing year information.
+
+### Exercise 12
+
+Now, lets visualize the distribution of years of the pieces.
+
+```{r histogram1}
+uoe_art %>%
+  ggplot(aes(x = year)) +
+  geom_histogram() +
+  labs(
+    x = "Year",
+    y = "Number of Pieces",
+    title = "Distribution of Years of Art Pieces"
+  )
+```
+
+The histogram has a value at around 0 AD which is far ahead than the year of all the other art pieces. In other words, the histogram indicates the presence of an outlier. 
+
+### Exercise 13
+
+The art piece titled "Death Mask (2)" had the out-of-the-ordinary information. Our code couldn't capture the correct information because it took the brackets in the title "(2)" itself as the date and ignored the actual date that came after the "(2)".
+
+Lets correct the year information of the outlier that we mentioned above. 
+
+```{r remove-outlier}
+uoe_art <- uoe_art %>%
+    mutate(year = case_when(
+    year == 2  ~ 1964,
+    TRUE       ~ year
+  ))
+```
+
+Now, lets visualize the distribution of the years of the pieces again.
+
+```{r histogram-2}
+uoe_art %>%
+  ggplot(aes(x = year)) +
+  geom_histogram(binwidth = 10) +
+  labs(
+    x = "Year",
+    y = "Number of Pieces",
+    title = "Published Years of Art Pieces"
+  )
+```
+
+The distribution is bimodal with peaks at around 1960 and 2020 AD. While majority of art pieces had years clustered in between 1950 and 2020 AD, there were some art pieces that had year as early as around 1800 AD as well.
+
+### Exercise 14
+
+Now, lets find the most commonly featured artist in the collection.
+
+```{r count-art}
+uoe_art %>%
+  count(artist, sort = TRUE) %>%
+  filter(artist != "Unknown" & artist != "NA")
+```
+
+The most commonly featured artist was Emma Gillies. She had 148 arts featured in the collection. She was followed by John Bellany and Ann F Ward each with 22 and 19 arts featured respectively. 
+
+They must have been associated with the university in some way or the other because of which the university has so many pieces from them. Probably, they were either students or faculty members at the University of Edinburgh.
+
+### Exercise 15
+
+Finally, lets find the number of arts with the word "child" in their titles. The information of the art pieces with "child" in their title are as follows: 
+
+```{r child-in-title}
+title_child <- uoe_art %>%
+    filter(
+      str_detect(.$title, "Child") |
+      str_detect(.$title, "child") 
+    )
+
+knitr::kable(title_child)
+```
+
+There are `r nrow(title_child)` art pieces that have a word containing the string “child” in their title.
